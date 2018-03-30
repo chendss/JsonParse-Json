@@ -2,134 +2,122 @@ var log = function () {
     console.log.apply(this, arguments)
 }
 
-var i = 0
+var MyJson = function (jsonStr) {
+    this.i = 0
+    this.str = jsonStr
 
-var indexStr
-
-var str = '{"a":[1,2],"b":{"d":[1,2,3],"f":{"p":[1,2,3]}}'
-
-maxIndex = str.length - 1
-
-var parseFalse = function () {
-    return parseKeyWord('false', 5)
-}
-
-var parseTrue = function () {
-    return parseKeyWord('true', 4)
-}
-
-var parseNull = function () {
-    return parseKeyWord('null', 4)
-}
-
-var next = function (n = 1) {
-    let newI = i + n
-    if (newI <= str.length - 1) {
-        i += n
-    } else {
-        log('越界', i, n)
-    }
-    indexStr = str[i]
-}
-
-var parseKeyWord = function (keyWord, n) {
-    let keyWordDict = {
-        'null': null,
-        'false': false,
-        'true': true,
-    }
-    let content = str.substr(i, n)
-    if (content === keyWord) {
-        next(n)
-        return keyWordDict[keyWord]
-    } else {
-        throw new Error('意外的错误:' + i)
-    }
-}
-
-var parseString = function () {
-    let result = ''
-    next() // 扫描到 "
-    while (str[i] !== '"') {
-        result += str[i]
-        next() // 去往下一个字符串的字符
-    }
-    next()
-    return result //此时扫描到字符串末尾的 "
-}
-
-var parseArray = function () {
-    let result = []
-    next()
-    while (str[i] !== ']') {
-        let ele = parseValue()
-        result.push(ele)
-        if (str[i] === ',') {
-            next()
+    this.next = (n = 1) => {
+        let newI = this.i + n
+        if (newI <= this.str.length - 1) {
+            this.i += n
+        } else {
+            throw new Error('指针越界')
         }
     }
-    next()
-    return result
-}
 
-var parseObject = function () {
-    next()
-    let result = {}
-    let key, value
-    while (str[i] !== '}') {
-        key = parseString()
-
-        if (str[i] !== ':') {
-            throw new Error('意外的语法,第' + i + "个字符")
+    this.parseKeyWord = (keyWord, n) => {
+        let keyWordDict = {
+            'null': null,
+            'false': false,
+            'true': true,
         }
-
-        next() // 此时到达匹配值处
-        value = parseValue()
-        result[key] = value
-        if (str[i] === ',') {
-            next() // 跳过,
+        let content = this.str.substr(this.i, n)
+        if (content === keyWord) {
+            this.next(n)
+            return keyWordDict[keyWord]
+        } else {
+            throw new Error('意外的错误:' + this.i)
         }
     }
-    if (i + 1 < str.length - 1) {
-        next()
-    }
-    return result //此时扫描到 }
-}
 
-var parseNumber = function () {
-    let result = 0
-    let numberStr = ''
-    let endList = [',', ']', '}']
-    while (!endList.includes(str[i])) {
-        numberStr += str[i]
-        next()
+    this.parseString = () => {
+        let result = ''
+        this.next() // 扫描到 "
+        while (this.str[this.i] !== '"') {
+            result += this.str[this.i]
+            this.next() // 去往下一个字符串的字符
+        }
+        this.next()
+        return result //此时扫描到字符串末尾的 "
     }
-    result = parseFloat(numberStr)
-    return result
-}
 
-var parseValue = function () {
-    if (str[i] === '"') {
-        return parseString()
-    } else if (str[i] === '[') {
-        return parseArray()
-    } else if (str[i] === '{') {
-        return parseObject()
-    } else if (str[i] === 't') {
-        return parseTrue()
-    } else if (str[i] === 'f') {
-        return parseFalse()
-    } else if (str[i] === 'n') {
-        return parseNull()
-    } else {
-        return parseNumber()
+    this.parseNumber = () => {
+        let result = 0
+        let numberStr = ''
+        let endList = [',', ']', '}']
+        while (!endList.includes(this.str[this.i])) {
+            numberStr += this.str[this.i]
+            this.next()
+        }
+        result = parseFloat(numberStr)
+        return result
+    }
+
+    this.parseArray = () => {
+        let result = []
+        this.next()
+        while (this.str[this.i] !== ']') {
+            let ele = this.parseValue()
+            result.push(ele)
+            if (this.str[this.i] === ',') {
+                this.next()
+            }
+        }
+        this.next()
+        return result
+    }
+
+    this.parseValue = () => {
+        if (this.str[this.i] === '"') {
+            return this.parseString()
+        } else if (this.str[this.i] === '[') {
+            return this.parseArray()
+        } else if (this.str[this.i] === '{') {
+            return this.parseObject()
+        } else if (this.str[this.i] === 't') {
+            return this.parseKeyWord('true', 4)
+        } else if (this.str[this.i] === 'f') {
+            return this.parseKeyWord('false', 5)
+        } else if (this.str[this.i] === 'n') {
+            return this.parseKeyWord('null', 4)
+        } else {
+            return this.parseNumber()
+        }
+    }
+
+    this.parseObject = () => {
+        this.next()
+        let result = {}
+        let key, value
+        while (this.str[this.i] !== '}') {
+            key = this.parseString()
+
+            if (this.str[this.i] !== ':') {
+                throw new Error('意外的语法,第' + this.i + "个字符")
+            }
+
+            this.next() // 此时到达匹配值处
+            value = this.parseValue()
+            result[key] = value
+            if (this.str[this.i] === ',') {
+                this.next() // 跳过,
+            }
+        }
+        if (this.i + 1 < this.str.length - 1) {
+            this.next()
+        }
+        return result //此时扫描到 }
+    }
+
+    this.parse = () => {
+        return this.parseValue()
     }
 }
 
 var parse = function () {
-    var ttt=parseValue()
-    log(ttt)
-    log(ttt['b'])
+    let jsonStr = '{"a":1}'
+    var myJson = new MyJson(jsonStr)
+    log(myJson.parse())
 }
 
 parse()
