@@ -115,7 +115,7 @@ var MyJson = function (jsonStr) {
 }
 
 var parse = function () {
-    let jsonStr = '{"a":1}'
+    let jsonStr = '{"a":1,"b":[1,2,3]}'
     var myJson = new MyJson(jsonStr)
     log(myJson.parse())
 }
