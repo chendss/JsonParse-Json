@@ -12,3 +12,5 @@ parse()
 
 { a: 1, b: [ 1, 2, 3 ] }
 ```
+
+![avatar](https://github.com/chendss/JsonParse-Json/blob/cyl/1.png)
